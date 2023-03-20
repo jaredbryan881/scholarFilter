@@ -35,7 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                             // Check if the journal is on the block list
                             blockList.forEach(function (item, index) {
-                                if (new RegExp(item).test(title)) {
+                                if (new RegExp(item.toLowerCase()).test(title.toLowerCase())) {
                                     // Delete this element of the HTML table
                                     var elementToDelete = currentBlock.parents("td.gsc_a_t").parents("tr.gsc_a_tr");
                                     if (elementToDelete.length>0){elementToDelete[0].remove()};
@@ -52,7 +52,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                             // Check if the journal is on the block list
                             blockList.forEach(function (item, index) {
-                                if (new RegExp(item).test(title)) {
+                                if (new RegExp(item.toLowerCase()).test(title.toLowerCase())) {
                                     // Delete this element of the HTML table
                                     var elementToDelete = currentBlock.parents("div.gs_ri").parents("div.gs_r.gs_or.gs_scl");
                                     if (elementToDelete.length>0){elementToDelete[0].remove()};
