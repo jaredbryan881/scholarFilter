@@ -4,4 +4,4 @@ This chrome extension allows you to provide a list of journals you would like to
 TODO
 - Automatically apply block list to papers revealed after "SHOW MORE" is clicked.
 - Allow user to emphasize certain journals as well as remove them.
-- Update popup logo.
+- Handle exception when popup is accessed outside google chrome. This sends a message to the content script which fails because the url is incorrect.

@@ -4,7 +4,7 @@
   "description": "Remove conference presentations from google scholar",
   "version": "1.0",
   "action": {
-    "default_icon": "images/hello_extensions.png",
+    "default_icon": "images/logo.png",
     "default_popup": "popup.html"
   },
   "background": {
