@@ -47,15 +47,17 @@
                 var val = result.text
                 if(val !== ''){
                     // focus textarea on first line
-                    textarea.value = '\n'+val;
+                    textarea.value = val;
                 }
             });
         }
 
+        // Save the current block list to local storage
         function saveTextarea(){
             chrome.storage.local.set({"text": textarea.value})
         }
 
+        // Send the current URL and array of blocked journals to the content script
         function sendTextarea(){
             chrome.tabs.query({currentWindow: true, active: true}, function (tabs){
                 var activeTab = tabs[0];
