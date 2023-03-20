@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Scholar Search Filter",
+  "description": "Remove conference presentations from google scholar",
+  "version": "1.0",
+  "action": {
+    "default_icon": "images/hello_extensions.png",
+    "default_popup": "popup.html"
+  },
+  "background": {
+      "service_worker": "background.js"
+   },
+  "content_scripts": [ {
+      "js": [ "contentScript.js", "jquery-3.4.1.min.js"],
+      "matches": [ "*://scholar.google.com/*" ]
+   } ],
+  "permissions": [ "declarativeContent", "webNavigation", "activeTab", "storage" ],
+  "web_accessible_resources": [ {
+      "matches": [ "<all_urls>" ],
+      "resources": [ "images/*.png" ]
+   } ]
+}
