@@ -12,7 +12,7 @@
    },
   "content_scripts": [ {
       "js": [ "contentScript.js", "jquery-3.4.1.min.js"],
-      "matches": [ "*://scholar.google.com/*" ]
+      "matches": [ "*://scholar.google.com/*", "*://scholar.google.fr/*", "*://scholar.google.ru/*", "*://scholar.google.co.il/*" ]
    } ],
   "permissions": [ "declarativeContent", "webNavigation", "activeTab", "storage" ],
   "web_accessible_resources": [ {
