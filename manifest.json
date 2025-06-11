@@ -12,12 +12,22 @@
   "content_scripts": [ 
     {
       "js": [ "contentScript.js"],
-      "matches": [ "*://scholar.google.*/*"],
+      "matches": [
+        "https://scholar.google.com/*",
+        "https://scholar.google.fr/*",
+        "https://scholar.google.ru/*",
+        "https://scholar.google.co.il/*"
+      ],
       "run_at": "document_idle"
     } 
   ],
 
-  "host_permissions": ["*://scholar.google.*/*"],
+  "host_permissions": [
+    "https://scholar.google.com/*",
+    "https://scholar.google.fr/*",
+    "https://scholar.google.ru/*",
+    "https://scholar.google.co.il/*"
+  ],
   "permissions": ["storage"],
 
   "content_security_policy":{
