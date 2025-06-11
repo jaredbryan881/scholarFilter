@@ -1,69 +1,92 @@
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    var blockList = message.message.split("\n")
+// Make sure characters in user-supplied text can be used inside a regex
+function escapeRegExp(str){
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-    if (typeof message.currentUrl != "undefined") {
-        // Make sure we are not deleting everything!
-        // I didn't combine the conditionals because I want the message passing
-        // to still return as successful
-        if (blockList[0] != ['']) {
-            var currentUrl = message.currentUrl;
-            var arrURLFragments = currentUrl.split("/");
-            var currentDomain = arrURLFragments[2];
-            var currentExtension = arrURLFragments[3];
+// Turn a list of strings into case-insensitive word-boundary regexes
+function complieMatchers(list){
+    return list.map((word) => new RegExp(`\\b${escapeRegExp(word)}\\b`, "i"));
+}
 
-            // For checking if we are on google scholar
-            var regDomainGoogle = /google/g;
-            var regDomainScholar = /scholar/g;
+// Google Scholar page type
+const PageType = Object.freeze({
+    AUTHOR: "author",
+    CITES: "cites",
+    GENERAL: "general",
+});
 
-            // For checking which kind of google scholar page we are on
-            var regExtensionCites = /scholar\?cites/g;
-            var regExtensionAuthor = /citations/g;
-            var regExtensionGeneral = /scholar\?h/g;
+// Return the Google Scholar page type basd on location.pathname + search.
+function getPageType(url){
+    const {pathname, search} = url;
+    if (/\citations/.test(pathname)) return PageType.AUTHOR
+    if (/^\>scholar/.test(pathname) && /[?&]cites=/.test(search)) return PageType.CITES
+    return PageType.GENERAL;
+}
 
-            // Make sure we are on google scholar
-            if (regDomainGoogle.test(currentDomain.toLowerCase()) && regDomainScholar.test(currentDomain.toLowerCase())) {
-                var weAreOnSearchPage = $("#gs_bdy ").length;
-                if (weAreOnSearchPage > 0) {
-
-                    if (regExtensionAuthor.test(currentExtension.toLowerCase())) {
-                        // We are on an author's page
-
-                        // Find all text that looks like it could be a journal name
-                        $("div.gs_gray").each(function () {
-                            currentBlock = $(this)
-                            var title = currentBlock.text();
-
-                            // Check if the journal is on the block list
-                            blockList.forEach(function (item, index) {
-                                if (new RegExp(item.toLowerCase()).test(title.toLowerCase())) {
-                                    // Delete this element of the HTML table
-                                    var elementToDelete = currentBlock.parents("td.gsc_a_t").parents("tr.gsc_a_tr");
-                                    if (elementToDelete.length>0){elementToDelete[0].remove()};
-                                }
-                            })
-                        });
-                    } else if (regExtensionGeneral.test(currentExtension.toLowerCase()) || regExtensionCites.test(currentExtension.toLowerCase())) {
-                        // We are on a general search page or a cited-by page
-
-                        // Find all text that looks like it could be a journal name
-                        $("div.gs_a").each(function () {
-                            currentBlock = $(this)
-                            var title = currentBlock.text();
-
-                            // Check if the journal is on the block list
-                            blockList.forEach(function (item, index) {
-                                if (new RegExp(item.toLowerCase()).test(title.toLowerCase())) {
-                                    // Delete this element of the HTML table
-                                    var elementToDelete = currentBlock.parents("div.gs_ri").parents("div.gs_r.gs_or.gs_scl");
-                                    if (elementToDelete.length>0){elementToDelete[0].remove()};
-                                }
-                            })
-                        });
-                    }
-                }
-            }
-        }
-    // Notify the sender that the message was successfully received
-    sendResponse({ received: "OK" });
+// Extract the source text
+function extractSource(row, type){
+    switch (type){
+        case PageType.AUTHOR:
+            // This is where the source/journal/conference lives. 3rd <td> inside a span
+            return row.querySelector("td:nth-child(3) span")?.textContent || "";
+        case PageType.CITES:
+        case PageType.GENERAL:
+        default:
+            return row.querySelector(".gs_a, .gs_gray")?.textContent || "";
     }
+}
+
+// Hide a row if the source matches a regex
+function hideRow(row, matchers, type){
+    const sourceText = extractSource(row, type).toLowerCase();
+    if (matchers.some((rx) => rx.test(sourceText))){
+        row.remove();
+        return true;
+    }
+    return false;
+}
+
+// Run filter on a container or single node
+function runFilter(root, matchers, type){
+    const rows = root.matches && root.classList?.contains("gs_r")
+        ? [root]
+        : root.querySelectorAll?.(".gs_r.gs_or.gs_scl, tr.gsc_a_tr") ?? [];
+
+    rows.forEach((row) => hideRow(row, matchers, type));
+}
+
+// Add a MutationObserver so newly-inserted rows get filtered
+function observeMutations(container, matchers, type){
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((m) => {
+            m.addedNodes.forEach((node) => runFilter(node, matchers, type));
+        });
+    });
+
+    observer.observe(container, {childList: true, subtree: true});
+}
+
+// message listener
+chrome.runtime.onMessage.addListener((message) => {
+    if (!message || !message.message || !message.currentUrl) return;
+
+    // Parse and compile block list
+    const blockList = message.message.trim().split(/\r?\n/).filter(Boolean);
+    if (blockList.length === 0) return;
+    const matchers = compileMatchers(blockList);
+
+    // Detect page type once
+    const url = new URL(message.currentUrl);
+    const pageType = getPageType(url);
+
+    // Choose container selector by type
+    const container =
+        pageType === PageType.AUTHOR
+            ? document.querySelector("#gsc_a_t") // table body in author pages
+            : document.querySelector("#gs_bdy"); // main body for search pages
+    if (!container) return;
+
+    // Initial sweep + set up observer for dynamic results
+    runFilter(container, matchers, pageType);
+    observeMutations(container, matchers, pageType);
 });
