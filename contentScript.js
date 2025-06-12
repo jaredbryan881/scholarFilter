@@ -89,10 +89,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 	if (!container) return;
 
 	// Initial sweep + set up observer for dynamic results
-	//runFilter(container, matchers, pageType);
-	//observe(container, matchers, pageType);
-	//sendResponse({ ok: true});
-
 	const initialBlocked = runFilter(container, matchers, pageType);
 	observe(container, matchers, pageType);
 	sendResponse({blocked: initialBlocked});
