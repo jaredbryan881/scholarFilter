@@ -1,5 +1,6 @@
-<h1><img src="images/logo_v2.png" width=15% height=15%> Scholar Filter</h1>
+<img src="images/logo_v2.png" width=10% height=10%>
 
+# Scholar Filter
 I use Google scholar to find new papers all the time, but search results sorted by year are often littered with conference abstracts.
 This chrome extension allows you to provide a list of journals you would like to remove from your google scholar searches.
 
